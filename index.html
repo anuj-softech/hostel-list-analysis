@@ -65,44 +65,45 @@
     });
 
   function analyze(data) {
-    // Normalize room numbers
     data.forEach(d => d["Room No."] = String(d["Room No."]));
 
     const hostelCounts = {};
-    const roomMap = {}; // key: hostel_room, value: array of students
+    const roomMap = {};
+    const nameCount = {};
 
     data.forEach(student => {
+      const name = student["Name of the student"];
+      nameCount[name] = (nameCount[name] || 0) + 1;
+
       const hostel = student["Hostel No."];
       const room = student["Room No."];
       const key = `${hostel}_${room}`;
 
-      // Count students
       hostelCounts[hostel] = hostelCounts[hostel] || { students: 0, rooms: new Set() };
       hostelCounts[hostel].students++;
       hostelCounts[hostel].rooms.add(room);
 
-      // Map rooms to students
       if (!roomMap[key]) roomMap[key] = [];
       roomMap[key].push(student);
     });
 
-    // Display summary
     const summaryDiv = document.getElementById('summary');
     summaryDiv.innerHTML = '<h3>Hostel Summary</h3>' + Object.entries(hostelCounts).map(([hostel, stats]) => {
       return `<p><strong>${hostel}</strong>: ${stats.students} students, ${stats.rooms.size} rooms allotted</p>`;
     }).join('');
 
-    // Populate table
     const tbody = document.querySelector('#roomTable tbody');
     tbody.innerHTML = '';
 
     Object.entries(roomMap).forEach(([key, students]) => {
       const [hostel, room] = key.split('_');
       const row = document.createElement('tr');
-      if (students.length < 2) row.classList.add('highlight');
-
       const name1 = students[0]?.["Name of the student"] || '';
       const name2 = students[1]?.["Name of the student"] || '';
+
+      if (students.length < 2 || nameCount[name1] > 1 || nameCount[name2] > 1) {
+        row.classList.add('highlight');
+      }
 
       row.innerHTML = `
         <td>${hostel}</td>
