@@ -1,119 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Hostel Allotment Analytics</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f7f7f7;
-      padding: 20px;
-    }
-    .section {
-      margin-top: 20px;
-    }
-    .summary {
-      background: #eef;
-      padding: 10px;
-      margin-bottom: 20px;
-      border-left: 4px solid #338;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 10px;
-    }
-    th, td {
-      padding: 8px;
-      border: 1px solid #ccc;
-      text-align: left;
-    }
-    th {
-      background: #ddd;
-    }
-    .highlight {
-      background-color: #ffcccc;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Hostel Allotment Analytics</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f7f7f7;
+            padding: 20px;
+        }
+        .section {
+            margin-top: 20px;
+        }
+        .summary {
+            background: #eef;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #338;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 8px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        th {
+            background: #ddd;
+        }
+        .highlight {
+            background-color: #ffcccc;
+        }
+    </style>
 </head>
 <body>
 
 <h2>Hostel Allotment Analytics</h2>
 
 <div class="section">
-  <div id="summary" class="summary"></div>
-  <h3>Room-wise Allotment</h3>
-  <table id="roomTable">
-    <thead>
-      <tr>
-        <th>Hostel</th>
-        <th>Room No.</th>
-        <th>Student 1</th>
-        <th>Student 2</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <div id="summary" class="summary"></div>
+    <h3>Room-wise Allotment</h3>
+    <table id="roomTable">
+        <thead>
+        <tr>
+            <th>Hostel</th>
+            <th>Room No.</th>
+            <th>Student 1</th>
+            <th>Student 2</th>
+            <th>Student 3</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 </div>
 
 <script>
-  fetch('data.json')
-    .then(res => res.json())
-    .then(data => analyze(data))
-    .catch(err => {
-      document.body.innerHTML = '<h2 style="color:red;">Failed to load data.json</h2><p>' + err + '</p>';
-    });
+    fetch('data.json')
+        .then(res => res.json())
+        .then(data => analyze(data))
+        .catch(err => {
+            document.body.innerHTML = '<h2 style="color:red;">Failed to load data.json</h2><p>' + err + '</p>';
+        });
 
-  function analyze(data) {
-    data.forEach(d => d["Room No."] = String(d["Room No."]));
+    function analyze(data) {
+        data.forEach(d => d["Room No."] = String(d["Room No."]));
 
-    const hostelCounts = {};
-    const roomMap = {};
-    const nameCount = {};
+        const hostelCounts = {};
+        const roomMap = {};
+        const nameCount = {};
 
-    data.forEach(student => {
-      const name = student["Name of the student"];
-      nameCount[name] = (nameCount[name] || 0) + 1;
+        data.forEach(student => {
+            const name = student["Name of the student"];
+            nameCount[name] = (nameCount[name] || 0) + 1;
 
-      const hostel = student["Hostel No."];
-      const room = student["Room No."];
-      const key = `${hostel}_${room}`;
+            const hostel = student["Hostel No."];
+            const room = student["Room No."];
+            const key = `${hostel}_${room}`;
 
-      hostelCounts[hostel] = hostelCounts[hostel] || { students: 0, rooms: new Set() };
-      hostelCounts[hostel].students++;
-      hostelCounts[hostel].rooms.add(room);
+            hostelCounts[hostel] = hostelCounts[hostel] || { students: 0, rooms: new Set() };
+            hostelCounts[hostel].students++;
+            hostelCounts[hostel].rooms.add(room);
 
-      if (!roomMap[key]) roomMap[key] = [];
-      roomMap[key].push(student);
-    });
+            if (!roomMap[key]) roomMap[key] = [];
+            roomMap[key].push(student);
+        });
 
-    const summaryDiv = document.getElementById('summary');
-    summaryDiv.innerHTML = '<h3>Hostel Summary</h3>' + Object.entries(hostelCounts).map(([hostel, stats]) => {
-      return `<p><strong>${hostel}</strong>: ${stats.students} students, ${stats.rooms.size} rooms allotted</p>`;
-    }).join('');
+        const summaryDiv = document.getElementById('summary');
+        summaryDiv.innerHTML = '<h3>Hostel Summary</h3>' + Object.entries(hostelCounts).map(([hostel, stats]) => {
+            return `<p><strong>${hostel}</strong>: ${stats.students} students, ${stats.rooms.size} rooms allotted</p>`;
+        }).join('');
 
-    const tbody = document.querySelector('#roomTable tbody');
-    tbody.innerHTML = '';
+        const tbody = document.querySelector('#roomTable tbody');
+        tbody.innerHTML = '';
 
-    Object.entries(roomMap).forEach(([key, students]) => {
-      const [hostel, room] = key.split('_');
-      const row = document.createElement('tr');
-      const name1 = students[0]?.["Name of the student"] || '';
-      const name2 = students[1]?.["Name of the student"] || '';
+        Object.entries(roomMap).forEach(([key, students]) => {
+            const [hostel, room] = key.split('_');
+            const names = students.map(s => s["Name of the student"]);
+            const occupancy = students[0]["Occupancy"] || "Double";
 
-      if (students.length < 2 || nameCount[name1] > 1 || nameCount[name2] > 1) {
-        row.classList.add('highlight');
-      }
+            const row = document.createElement('tr');
+            const expectedCount = (occupancy === "Triple") ? 3 : 2;
 
-      row.innerHTML = `
+            if (students.length < expectedCount) {
+                row.classList.add('highlight');
+            }
+
+            row.innerHTML = `
         <td>${hostel}</td>
         <td>${room}</td>
-        <td>${name1}</td>
-        <td>${name2}</td>
+        <td>${names[0] || ''}</td>
+        <td>${names[1] || ''}</td>
+        <td>${names[2] || ''}</td>
       `;
-      tbody.appendChild(row);
-    });
-  }
+            tbody.appendChild(row);
+        });
+    }
 </script>
 
 </body>
